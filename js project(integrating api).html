@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <div>
+        <form id="Form" onsubmit="handleformsubmit(event)">
+            <label for="sellingprice">Selling price:</label>
+            <input type="number" id="sellingprice">
+            <label for="productname">Product Name:</label>
+            <input type="text" id="productname">
+            <button type="submit">Add Product</button>
+        </form>
+    </div>
+    <div>
+        <p>Products:</p>
+        <ul id="products"></ul>
+    </div>
+    <div>
+        <p id="totalcost">Total value worth of products: <span id="totalValue">0</span></p>
+        <ul id="total"></ul>
+    </div>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.5.1/axios.min.js"></script>
+    <script>
+
+        window.onload = function() {
+            fetchProducts();
+        }
+
+        function fetchProducts() {
+            axios.get("https://crudcrud.com/api/44b5d392314c4bbeafa208df742dbac3/appointmentData")
+                .then(response => {
+                    const userData = response.data;
+                    userData.forEach(user => {
+                        productdetails(user);
+                    });
+                    updateTotalValue();
+                })
+                .catch(error => console.log(error));
+        }
+
+        function handleformsubmit(event) {
+            event.preventDefault();
+            let obj = {
+                'sellingprice': event.target.sellingprice.value,
+                'productname': event.target.productname.value,
+            };
+            axios.post("https://crudcrud.com/api/44b5d392314c4bbeafa208df742dbac3/appointmentData", obj)
+                .then((response) => {
+                    productdetails(response.data);
+                    updateTotalValue();
+                })
+                .catch((error) => console.log(error));
+        }
+
+        function productdetails(obj) {
+            let parentele = document.getElementById('products');
+            let childele = document.createElement('li');
+            childele.textContent = obj.sellingprice + ' - ' + obj.productname;
+            parentele.appendChild(childele);
+
+            // Delete product button
+            let deleteproduct = document.createElement('input');
+            deleteproduct.type = 'button';
+            deleteproduct.value = 'Delete product';
+            deleteproduct.onclick = function() {
+                parentele.removeChild(childele);
+                updateTotalValue();
+                deleteUserDetails(obj._id);
+            };
+            childele.appendChild(deleteproduct);
+        }
+         // update total value
+        function updateTotalValue() {
+            let productsList = document.getElementById('products').children;
+            let total = 0;
+            for (let i = 0; i < productsList.length; i++) {
+                let productDetails = productsList[i].textContent.split(' - ');
+                let sellingPrice = parseFloat(productDetails[0]);
+                total += sellingPrice;
+            }
+            document.getElementById('totalValue').textContent = total;
+        }
+
+        function deleteUserDetails(id) {
+            axios.delete(`https://crudcrud.com/api/44b5d392314c4bbeafa208df742dbac3/appointmentData/${id}`)
+                .then(response => console.log("Data deleted successfully"))
+                .catch(error => console.log(error));
+        }
+    </script>
+</body>
+</html>
